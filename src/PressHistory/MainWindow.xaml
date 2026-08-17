@@ -1,0 +1,324 @@
+<Window x:Class="PressHistory.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:PressHistory.Models"
+        xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
+        mc:Ignorable="d"
+        Title="PressHistory"
+        Style="{StaticResource AppWindowStyle}"
+        Width="540"
+        Height="720"
+        MinWidth="460"
+        MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip"
+        Closing="Window_Closing"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        Activated="Window_Activated">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+
+    <Grid Margin="24,20,24,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="HeaderPanel" Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Border Width="44"
+                    Height="44"
+                    CornerRadius="12"
+                    Background="{StaticResource AccentBrush}"
+                    VerticalAlignment="Center">
+                <Grid>
+                    <TextBlock Text="&#xE8C8;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="22"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Column="1" Margin="12,0,16,0" VerticalAlignment="Center">
+                <TextBlock Text="PressHistory"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock Text="Votre presse-papiers, gardé localement"
+                           Margin="0,2,0,0"
+                           FontSize="12"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+            </StackPanel>
+
+            <ToggleButton Grid.Column="2"
+                          Style="{StaticResource CaptureToggleStyle}"
+                          IsChecked="{Binding CaptureEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          Content="{Binding CaptureButtonLabel}"
+                          ToolTip="{Binding CaptureDescription}"
+                          automation:AutomationProperties.Name="Activer ou suspendre la capture" />
+        </Grid>
+
+        <Grid x:Name="SearchPanel" Grid.Row="1" Margin="0,0,0,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="SearchBox"
+                     Style="{StaticResource SearchTextBoxStyle}"
+                     Tag="Rechercher dans l’historique…"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     automation:AutomationProperties.Name="Rechercher dans l’historique" />
+
+            <Button Grid.Column="1"
+                    Margin="10,0,0,0"
+                    Style="{StaticResource DangerButtonStyle}"
+                    Click="ClearButton_Click"
+                    ToolTip="Effacer tout l’historique local"
+                    automation:AutomationProperties.Name="Effacer tout l’historique">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE74D;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="13"
+                               Margin="0,0,7,0" />
+                    <TextBlock Text="Effacer" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="2,0,2,10">
+            <TextBlock Text="Historique"
+                       FontSize="15"
+                       FontWeight="SemiBold" />
+            <TextBlock Text="{Binding HistorySummary}"
+                       HorizontalAlignment="Right"
+                       FontSize="12"
+                       Foreground="{StaticResource TextSecondaryBrush}" />
+        </Grid>
+
+        <Grid x:Name="HistoryPanel" Grid.Row="3">
+            <ListBox x:Name="HistoryList"
+                     ItemsSource="{Binding EntriesView}"
+                     SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
+                     ItemContainerStyle="{StaticResource HistoryItemStyle}"
+                     MouseDoubleClick="HistoryList_MouseDoubleClick"
+                     automation:AutomationProperties.Name="Éléments du presse-papiers">
+                <ListBox.Style>
+                    <Style TargetType="ListBox" BasedOn="{StaticResource HistoryListStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasVisibleEntries}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.Style>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type models:ClipboardEntry}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="36" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Width="32"
+                                    Height="32"
+                                    CornerRadius="8"
+                                    Background="{StaticResource AccentSoftBrush}"
+                                    VerticalAlignment="Top">
+                                <TextBlock Text="&#xE8C8;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1" Margin="10,0,14,0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource AccentSoftBrush}"
+                                            CornerRadius="5"
+                                            Padding="7,3"
+                                            Margin="0,0,8,0">
+                                        <TextBlock Text="TEXTE"
+                                                   FontSize="9"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource AccentBrush}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding CapturedAtLabel}"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBlock Text="{Binding Preview}"
+                                           MaxHeight="62"
+                                           FontSize="13"
+                                           LineHeight="19"
+                                           TextWrapping="Wrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
+
+                                <TextBlock Text="{Binding CharacterCountLabel}"
+                                           Margin="0,7,0,0"
+                                           FontSize="10"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <Button Style="{StaticResource PrimaryButtonStyle}"
+                                        Padding="10,7"
+                                        Margin="0,0,0,6"
+                                        Command="{Binding DataContext.CopyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip="Recopier ce texte"
+                                        automation:AutomationProperties.Name="Recopier cet élément">
+                                    <TextBlock Text="&#xE8C8;"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" />
+                                </Button>
+                                <Button Style="{StaticResource QuietButtonStyle}"
+                                        Padding="10,7"
+                                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip="Supprimer cet élément"
+                                        automation:AutomationProperties.Name="Supprimer cet élément">
+                                    <TextBlock Text="&#xE74D;"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Border x:Name="EmptyState"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="28">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasVisibleEntries}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="330">
+                    <Border Width="58"
+                            Height="58"
+                            CornerRadius="18"
+                            Background="{StaticResource AccentSoftBrush}"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,16">
+                        <TextBlock Text="&#xE8C8;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="25"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="{Binding EmptyStateTitle}"
+                               FontSize="17"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding EmptyStateDescription}"
+                               Margin="0,8,0,0"
+                               FontSize="12"
+                               LineHeight="18"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="4"
+                Margin="0,12,0,0"
+                Padding="11,8"
+                CornerRadius="8"
+                automation:AutomationProperties.LiveSetting="Polite"
+                Visibility="{Binding HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="{StaticResource SuccessSoftBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                            <Setter Property="Background" Value="{StaticResource DangerSoftBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock Text="{Binding StatusMessage}"
+                       FontSize="12"
+                       Foreground="{StaticResource SuccessBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Border>
+
+        <Border x:Name="FooterPanel"
+                Grid.Row="5"
+                Margin="0,14,0,0"
+                Padding="14,11"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <CheckBox Style="{StaticResource StartupCheckBoxStyle}"
+                          IsChecked="{Binding StartupEnabled, Mode=TwoWay}"
+                          Content="Démarrer avec Windows"
+                          ToolTip="Lancer discrètement PressHistory à l’ouverture de session" />
+
+                <TextBlock Grid.Column="1"
+                           Text="{Binding ShortcutLabel}"
+                           FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="1"
+                           Grid.ColumnSpan="2"
+                           Text="{Binding StorageLimitLabel}"
+                           Margin="0,7,0,0"
+                           FontSize="10"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
